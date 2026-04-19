@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Hostel Menu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="hero">
+    <h1>Smart Hostel Menu</h1>
+    <p class="subtitle">Today's selections</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="loadMenu('Breakfast', this)">☀️ Breakfast</button>
+    <button class="tab" onclick="loadMenu('Lunch', this)">🌤️ Lunch</button>
+    <button class="tab" onclick="loadMenu('Snacks', this)">🌙 Snacks</button>
+    <button class="tab" onclick="loadMenu('Dinner', this)">🌑 Dinner</button>
+  </div>
+
+  <div id="menu"></div>
+
+  <div class="section">
+    <div class="complaint-box">
+      <h2>Send Feedback</h2>
+      <textarea id="text" placeholder="Tell us how we can improve..."></textarea>
+      <button class="submit-btn" onclick="sendComplaint()">Submit Feedback</button>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
