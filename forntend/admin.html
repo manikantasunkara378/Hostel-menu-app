@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HostelEats — Admin Panel</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="wrapper">
+
+  <nav class="admin-nav" style="gap:0.5rem;display:flex;justify-content:flex-end;padding:1rem 1.5rem 0;">
+    <a href="analytics.html" class="nav-link">📊 Analytics</a>
+    <a href="index.html" class="nav-link">← Menu</a>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-tag" style="color:var(--gold);border-color:rgba(255,209,102,0.25);background:rgba(255,209,102,0.06);">
+      Admin · Control Panel
+    </div>
+    <h1>
+      <span class="line1" style="background:linear-gradient(90deg,#fff 30%,var(--gold) 70%);-webkit-background-clip:text;background-clip:text;">Manage</span>
+      <span class="line2" style="background:linear-gradient(90deg,var(--gold),var(--accent));-webkit-background-clip:text;background-clip:text;">Menu ⚙</span>
+    </h1>
+    <p class="hero-sub">Add items with photos · Monitor alerts · Manage feedback</p>
+  </header>
+
+  <div class="admin-layout">
+
+    <!-- ── ADD MENU FORM ── -->
+    <div class="form-card">
+      <h2>➕ Add New Menu Item</h2>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label>Day</label>
+          <input id="day" placeholder="e.g. monday" />
+        </div>
+
+        <div class="form-group">
+          <label>Meal Type</label>
+          <input id="meal" placeholder="breakfast / lunch…" />
+        </div>
+
+        <div class="form-group full">
+          <label>Food Item</label>
+          <input id="item" placeholder="e.g. Masala Dosa" />
+        </div>
+
+        <div class="form-group">
+          <label>Start Time</label>
+          <input id="start" placeholder="07:00 AM" />
+        </div>
+
+        <div class="form-group">
+          <label>End Time</label>
+          <input id="end" placeholder="09:00 AM" />
+        </div>
+
+        <!-- 📸 Photo Upload -->
+        <div class="form-group full photo-field">
+          <label>Food Photo <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <label class="photo-label-btn">
+            📷 Choose Photo
+            <input type="file" id="photoFile" accept="image/*" style="display:none"
+                   onchange="previewPhoto(this)">
+          </label>
+          <img id="photoPreview" alt="Preview" />
+        </div>
+
+      </div>
+      <button class="add-btn" onclick="addMenu()">
+        <span>✦</span> Add to Menu
+      </button>
+    </div>
+
+    <!-- ── 🚨 ALERT PANEL ── -->
+    <div class="alert-panel-card">
+      <div class="alert-panel-header">
+        <h2>🚨 Push Alerts <span class="alert-count-badge" id="alertBadge">Live</span></h2>
+        <button class="refresh-btn" onclick="loadAlerts()">↻ Refresh</button>
+      </div>
+      <div id="alertPanel">
+        <div style="color:var(--muted);font-size:0.82rem;padding:0.5rem 0">Loading alerts…</div>
+      </div>
+    </div>
+
+    <!-- ── MENU LIST ── -->
+    <div class="form-card" style="animation-delay:0.1s">
+
+      <div class="refresh-row">
+        <h2>📋 All Menu Items</h2>
+        <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+      </div>
+
+      <div class="meal-filter" id="mealFilter">
+        <button class="meal-pill active" onclick="filterMeal('all',this)">All</button>
+        <button class="meal-pill" onclick="filterMeal('breakfast',this)">🌅 Breakfast</button>
+        <button class="meal-pill" onclick="filterMeal('lunch',this)">☀️ Lunch</button>
+        <button class="meal-pill" onclick="filterMeal('snacks',this)">🍿 Snacks</button>
+        <button class="meal-pill" onclick="filterMeal('dinner',this)">🌙 Dinner</button>
+      </div>
+
+      <div id="menuList"></div>
+
+    </div>
+
+  </div>
+</div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,35 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Smart Hostel Menu</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HostelEats — Daily Menu</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <div class="hero">
-    <h1>Smart Hostel Menu</h1>
-    <p class="subtitle">Today's selections</p>
+<!-- Background orbs -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="wrapper">
+
+  <!-- Admin link -->
+  <nav class="admin-nav" style="gap:0.5rem">
+    <a href="analytics.html" class="nav-link">📊 Analytics</a>
+    <a href="admin.html" class="nav-link">⚙ Admin Panel</a>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-tag">Live · Today's Menu</div>
+    <h1>
+      <span class="line1">Hostel</span>
+      <span class="line2">Eats ✦</span>
+    </h1>
+    <p class="hero-sub">Fresh meals, every single day — pick your moment.</p>
+  </header>
+
+  <!-- Tab bar -->
+  <div class="tab-bar" role="tablist">
+    <button class="tab active" onclick="loadMenu('breakfast')" role="tab">
+      <span class="tab-icon">🌅</span><span>Breakfast</span>
+    </button>
+    <button class="tab" onclick="loadMenu('lunch')" role="tab">
+      <span class="tab-icon">☀️</span><span>Lunch</span>
+    </button>
+    <button class="tab" onclick="loadMenu('snacks')" role="tab">
+      <span class="tab-icon">🍿</span><span>Snacks</span>
+    </button>
+    <button class="tab" onclick="loadMenu('dinner')" role="tab">
+      <span class="tab-icon">🌙</span><span>Dinner</span>
+    </button>
   </div>
 
-  <div class="tab-bar">
-    <button class="tab active" onclick="loadMenu('Breakfast', this)">☀️ Breakfast</button>
-    <button class="tab" onclick="loadMenu('Lunch', this)">🌤️ Lunch</button>
-    <button class="tab" onclick="loadMenu('Snacks', this)">🌙 Snacks</button>
-    <button class="tab" onclick="loadMenu('Dinner', this)">🌑 Dinner</button>
+  <!-- Menu grid -->
+  <div id="menu" role="main">
+    <!-- Cards injected here -->
   </div>
 
-  <div id="menu"></div>
-
+  <!-- Feedback Section -->
   <div class="section">
+    <p class="section-label">Feedback</p>
     <div class="complaint-box">
-      <h2>Send Feedback</h2>
-      <textarea id="text" placeholder="Tell us how we can improve..."></textarea>
-      <button class="submit-btn" onclick="sendComplaint()">Submit Feedback</button>
+      <h2>💬 Share Your Feedback</h2>
+      <textarea id="text" placeholder="Tell us about the food quality, suggestions, complaints..."></textarea>
+      <button class="submit-btn" onclick="sendComplaint()">Send Feedback →</button>
     </div>
   </div>
 
-  <script src="js/app.js"></script>
+
+<div class="section">
+  <p class="section-label">All Available Items</p>
+  <ul>
+    <li><strong>Monday:</strong> Bread & Omelet, Veg Upma, Coconut Chutney, Milk & Coffee, Tomato Ketchup; Chapathi, Palak Paneer, White Rice, Sambar, Potato Fry, Tomato Dal, Payasam, Rasam, Chutney, Buttermilk, Fryums; Bun; Dosa, Egg Kurma, Paneer Curry, Pulav, Rice, Curd, Banana, Raitha, Milk</li>
+    <li><strong>Tuesday:</strong> Idly, Ven Pongal, Medhu Vada, Coconut Chutney, Pumpkin Sambar; Chapathi, Green Peas Masala, White Rice, Veg Sambar, Spinach Dal, Banana Fry, Egg Omelet, Rasam, Gongura, Curd, Appalam; Curry Puff; Chicken Curry, Chicken Kulambu, Fry, Roti, Ghee Rice, Rice, Sambar, Curd, Sweet, Milk</li>
+    <li><strong>Wednesday:</strong> Masala Dosa, Semiya Khichadi, Onion Sambar, Peanut Chutney, Bread & Jam, Milk & Coffee; Roti, Veg Salna, White Rice, Dal, Sambar, Beans Fry, Egg Masala, Rasam, Thoviyal, Buttermilk, Onion Rings; Mixture; Chicken Biryani, Salna, Veg Biryani, Chapathi, Pepper Masala, Raitha, Rice, Rasam, Curd, Sweet, Milk</li>
+    <li><strong>Thursday:</strong> Maggi, Mysore Bonda, Red Chutney, Cornflakes, Milk, Coffee; Chapathi, Veg Gravy, White Rice, Dal, Brinjal Curry, Fry, Egg Podmas, Rasam, Coconut, Buttermilk, Fryums; Ghee Biscuits; Chicken Masala, Kurma, Corn Fry, Roti, Pulav, Rice, Sambar, Curd, Sweet, Milk</li>
+    <li><strong>Friday:</strong> Pesarattu, Allam Pachadi, Rava Upma, Sambar, Coconut Chutney, Bread & Jam; Chapathi, Rajma, White Rice, Dal, Sambar, Brinjal Fry, Egg Omelette, Rasam, Chutney, Buttermilk, Appalam; Cake; Fried Rice, Chicken Gravy, Mushroom Rice, Chapathi, Rajma, Sauce, Rice, Rasam, Curd, Sweet, Milk</li>
+    <li><strong>Saturday:</strong> Karam Dosa, Chutney, Sambar, White Sauce Pasta, Cornflakes, Milk & Coffee; Chapathi, Veg Kadai, Bisi Bele Bath, Curd Rice, White Rice, Rasam, Yam Fry, Vada, Pickle, Sweet, Curd Chilli; Boiled Groundnut; Pulihora, Veg Curry, Vada, Roti, Dal, Rice, Cabbage Fry, Rasam, Curd, Sweet, Milk</li>
+    <li><strong>Sunday:</strong> Poori, Channa Masala, Bread & Jam, Coffee, Milk; Chapathi, Gobi Kurma, White Rice, Dal, Sambar, Beetroot Fry, Egg Curry, Rasam, Mint Chutney, Cool Drink, Fryums; Sweetcorn; Chicken Curry, Dosa, Chutney, Rice, Sambar, Curd, Fruits, Milk</li>
+  </ul>
+</div>
+
+<div class="section">
+  <p class="section-label">Launch Items</p>
+  <ul>
+    <li><strong>Monday:</strong> Chapathi, Palak Paneer, White Rice, Sambar, Potato Fry, Tomato Dal, Payasam, Rasam, Chutney, Buttermilk, Fryums</li>
+    <li><strong>Tuesday:</strong> Chapathi, Green Peas Masala, White Rice, Veg Sambar, Spinach Dal, Banana Fry, Egg Omelet, Rasam, Gongura, Curd, Appalam</li>
+    <li><strong>Wednesday:</strong> Roti, Veg Salna, White Rice, Dal, Sambar, Beans Fry, Egg Masala, Rasam, Thoviyal, Buttermilk, Onion Rings</li>
+    <li><strong>Thursday:</strong> Chapathi, Veg Gravy, White Rice, Dal, Brinjal Curry, Fry, Egg Podmas, Rasam, Coconut, Buttermilk, Fryums</li>
+    <li><strong>Friday:</strong> Chapathi, Rajma, White Rice, Dal, Sambar, Brinjal Fry, Egg Omelette, Rasam, Chutney, Buttermilk, Appalam</li>
+    <li><strong>Saturday:</strong> Chapathi, Veg Kadai, Bisi Bele Bath, Curd Rice, White Rice, Rasam, Yam Fry, Vada, Pickle, Sweet, Curd Chilli</li>
+    <li><strong>Sunday:</strong> Chapathi, Gobi Kurma, White Rice, Dal, Sambar, Beetroot Fry, Egg Curry, Rasam, Mint Chutney, Cool Drink, Fryums</li>
+  </ul>
+</div>
+
+<div class="section">
+  <p class="section-label">Snacks</p>
+  <ul>
+    <li>Bun (Monday)</li>
+    <li>Curry Puff (Tuesday)</li>
+    <li>Mixture (Wednesday)</li>
+    <li>Ghee Biscuits (Thursday)</li>
+    <li>Cake (Friday)</li>
+    <li>Boiled Groundnut (Saturday)</li>
+    <li>Sweetcorn (Sunday)</li>
+  </ul>
+</div>
+
+<div class="section">
+  <p class="section-label">Dinner Items</p>
+  <ul>
+    <li><strong>Monday:</strong> Dosa, Egg Kurma, Paneer Curry, Pulav, Rice, Curd, Banana, Raitha, Milk</li>
+    <li><strong>Tuesday:</strong> Chicken Curry, Chicken Kulambu, Fry, Roti, Ghee Rice, Rice, Sambar, Curd, Sweet, Milk</li>
+    <li><strong>Wednesday:</strong> Chicken Biryani, Salna, Veg Biryani, Chapathi, Pepper Masala, Raitha, Rice, Rasam, Curd, Sweet, Milk</li>
+    <li><strong>Thursday:</strong> Chicken Masala, Kurma, Corn Fry, Roti, Pulav, Rice, Sambar, Curd, Sweet, Milk</li>
+    <li><strong>Friday:</strong> Fried Rice, Chicken Gravy, Mushroom Rice, Chapathi, Rajma, Sauce, Rice, Rasam, Curd, Sweet, Milk</li>
+    <li><strong>Saturday:</strong> Pulihora, Veg Curry, Vada, Roti, Dal, Rice, Cabbage Fry, Rasam, Curd, Sweet, Milk</li>
+    <li><strong>Sunday:</strong> Chicken Curry, Dosa, Chutney, Rice, Sambar, Curd, Fruits, Milk</li>
+  </ul>
+</div>
+
+
+
+<script src="js/app.js"></script>
 </body>
 </html>

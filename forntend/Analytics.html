@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HostelEats — Feedback Analytics</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── Dashboard-specific overrides ── */
+    .dash-hero { padding: 3.5rem 1.5rem 1.5rem; text-align: center; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+      padding: 0 1.5rem 1.5rem;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.4rem 1.1rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: cardRise 0.5s cubic-bezier(.16,1,.3,1) both;
+      transition: transform 0.25s, border-color 0.25s;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .kpi-card.blue::before  { background: linear-gradient(90deg,var(--accent),transparent); }
+    .kpi-card.pink::before  { background: linear-gradient(90deg,var(--accent2),transparent); }
+    .kpi-card.green::before { background: linear-gradient(90deg,var(--accent3),transparent); }
+    .kpi-card.gold::before  { background: linear-gradient(90deg,var(--gold),transparent); }
+    .kpi-card:hover { transform: translateY(-4px); border-color: rgba(99,210,255,0.25); }
+
+    .kpi-icon { font-size: 1.8rem; display: block; margin-bottom: 0.5rem; }
+    .kpi-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      counter-reset: num;
+    }
+    .kpi-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      font-family: var(--font-display);
+    }
+
+    /* ── Charts row ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      padding: 0 1.5rem 1.5rem;
+    }
+    @media (max-width: 600px) { .charts-row { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      animation: fadeSlideUp 0.6s cubic-bezier(.16,1,.3,1) both;
+    }
+    .chart-card h3 {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    /* Donut chart */
+    .donut-wrap { position: relative; width: 150px; height: 150px; margin: 0 auto 1rem; }
+    .donut-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .donut-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-family: var(--font-display);
+    }
+    .donut-pct { font-size: 1.6rem; font-weight: 800; color: var(--text); }
+    .donut-sub { font-size: 0.65rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+    .legend { display: flex; flex-direction: column; gap: 0.55rem; }
+    .legend-row {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.8rem; color: var(--text);
+    }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .legend-pct { margin-left: auto; color: var(--muted); font-size: 0.76rem; }
+
+    /* Bar chart */
+    .bar-chart { display: flex; flex-direction: column; gap: 0.75rem; }
+    .bar-row { display: flex; align-items: center; gap: 0.7rem; }
+    .bar-label { font-size: 0.78rem; color: var(--muted); width: 72px; flex-shrink: 0; font-family: var(--font-display); }
+    .bar-track {
+      flex: 1; height: 10px; background: rgba(255,255,255,0.05);
+      border-radius: 999px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 999px;
+      width: 0%;
+      transition: width 1.2s cubic-bezier(.16,1,.3,1);
+    }
+    .bar-num { font-size: 0.76rem; font-family: var(--font-display); font-weight: 600; width: 28px; text-align: right; }
+
+    /* Trend sparkline */
+    .spark-wrap { width: 100%; overflow: hidden; }
+    .spark-wrap svg { width: 100%; height: 80px; }
+
+    /* Word cloud */
+    .word-cloud {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      align-items: center; justify-content: center;
+      padding: 0.5rem 0;
+    }
+    .word-tag {
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      cursor: default;
+      transition: transform 0.2s;
+      animation: fadeIn 0.4s ease both;
+    }
+    .word-tag:hover { transform: scale(1.12); }
+
+    /* AI insights */
+    .insights-section { padding: 0 1.5rem 1.5rem; }
+    .insight-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.8rem;
+      position: relative;
+      overflow: hidden;
+      animation: fadeSlideUp 0.7s ease both;
+    }
+    .insight-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--gold));
+    }
+    .insight-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.2rem;
+    }
+    .insight-header h3 {
+      font-family: var(--font-display);
+      font-size: 1rem; font-weight: 700;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .ai-badge {
+      font-size: 0.68rem; font-weight: 700; font-family: var(--font-display);
+      padding: 0.25rem 0.75rem; border-radius: 999px;
+      background: linear-gradient(135deg, rgba(99,210,255,0.15), rgba(255,107,202,0.15));
+      color: var(--accent);
+      border: 1px solid rgba(99,210,255,0.25);
+      letter-spacing: 1.5px; text-transform: uppercase;
+    }
+
+    .insight-body {
+      font-size: 0.88rem;
+      line-height: 1.75;
+      color: #b0b8d0;
+      white-space: pre-wrap;
+      min-height: 80px;
+    }
+
+    .insight-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.2rem; }
+    .chip {
+      font-size: 0.72rem; font-weight: 600; font-family: var(--font-display);
+      padding: 0.25rem 0.8rem; border-radius: 999px;
+      border: 1px solid; letter-spacing: 0.5px;
+    }
+    .chip.pos { background: rgba(127,255,110,0.08); color: var(--accent3); border-color: rgba(127,255,110,0.2); }
+    .chip.neg { background: rgba(255,107,202,0.08); color: var(--accent2); border-color: rgba(255,107,202,0.2); }
+    .chip.neu { background: rgba(99,210,255,0.08); color: var(--accent); border-color: rgba(99,210,255,0.2); }
+
+    /* Feed */
+    .feed-section { padding: 0 1.5rem 2rem; }
+    .feed-list { display: flex; flex-direction: column; gap: 0.7rem; }
+    .feed-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+      display: flex; gap: 0.9rem; align-items: flex-start;
+      animation: fadeSlideUp 0.4s ease both;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .feed-item:hover { border-color: rgba(99,210,255,0.2); transform: translateX(4px); }
+    .feed-sentiment { font-size: 1.3rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .feed-text { font-size: 0.84rem; line-height: 1.55; color: var(--text); flex: 1; }
+    .feed-meta { font-size: 0.7rem; color: var(--muted); margin-top: 0.3rem; }
+
+    /* Analyse btn */
+    .analyse-btn {
+      background: linear-gradient(135deg, #0a7fcf, var(--accent));
+      color: #04050f;
+      border: none;
+      border-radius: 10px;
+      padding: 0.6rem 1.3rem;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .analyse-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99,210,255,0.35);
+    }
+    .analyse-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Typing cursor */
+    .cursor { display: inline-block; width: 2px; height: 1em; background: var(--accent); margin-left: 2px; animation: blink 0.8s step-end infinite; vertical-align: text-bottom; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* Spinner */
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(99,210,255,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Counter animation */
+    .count-up { display: inline-block; }
+
+    /* Empty feed */
+    .feed-empty { text-align: center; color: var(--muted); padding: 2rem; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="wrapper">
+
+  <!-- Nav -->
+  <nav class="admin-nav" style="gap:0.5rem;display:flex;justify-content:flex-end;padding:1rem 1.5rem 0;">
+    <a href="index.html" class="nav-link">🍽 Menu</a>
+    <a href="admin.html" class="nav-link">⚙ Admin</a>
+  </nav>
+
+  <!-- Hero -->
+  <header class="dash-hero hero">
+    <div class="hero-tag" style="color:var(--gold);border-color:rgba(255,209,102,0.25);background:rgba(255,209,102,0.06);">
+      AI · Feedback Analytics
+    </div>
+    <h1>
+      <span class="line1">Feedback</span>
+      <span class="line2">Dashboard 📊</span>
+    </h1>
+    <p class="hero-sub"></p>
+    <div style="margin-top:0.8rem;">
+      <span id="liveBadge" style="
+        font-size:0.72rem; font-family:var(--font-display); font-weight:700;
+        padding:0.3rem 1rem; border-radius:999px; border:1px solid rgba(99,210,255,0.3);
+        color:var(--accent); background:rgba(99,210,255,0.07); letter-spacing:1px;
+        transition: all 0.4s ease;
+      ">⟳ Connecting…</span>
+    </div>
+  </header>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi-card blue" style="animation-delay:0s">
+      <span class="kpi-icon">💬</span>
+      <div class="kpi-value count-up" data-target="0" id="kpiTotal">0</div>
+      <div class="kpi-label">Total Feedbacks</div>
+    </div>
+    <div class="kpi-card green" style="animation-delay:0.08s">
+      <span class="kpi-icon">😊</span>
+      <div class="kpi-value count-up" data-target="0" id="kpiPos" style="color:var(--accent3)">0</div>
+      <div class="kpi-label">Positive</div>
+    </div>
+    <div class="kpi-card pink" style="animation-delay:0.16s">
+      <span class="kpi-icon">😤</span>
+      <div class="kpi-value count-up" data-target="0" id="kpiNeg" style="color:var(--accent2)">0</div>
+      <div class="kpi-label">Negative</div>
+    </div>
+    <div class="kpi-card gold" style="animation-delay:0.24s">
+      <span class="kpi-icon">😐</span>
+      <div class="kpi-value count-up" data-target="0" id="kpiNeu" style="color:var(--gold)">0</div>
+      <div class="kpi-label">Neutral</div>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="charts-row">
+
+    <!-- Donut: Sentiment -->
+    <div class="chart-card" style="animation-delay:0.1s">
+      <h3>📈 Sentiment Split</h3>
+      <div class="donut-wrap" id="donutWrap">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="14"/>
+          <circle id="donutPos" cx="50" cy="50" r="38" fill="none" stroke="var(--accent3)" stroke-width="14"
+            stroke-dasharray="0 239" stroke-linecap="round" style="transition:stroke-dasharray 1.2s cubic-bezier(.16,1,.3,1)"/>
+          <circle id="donutNeg" cx="50" cy="50" r="38" fill="none" stroke="var(--accent2)" stroke-width="14"
+            stroke-dasharray="0 239" stroke-linecap="round" style="transition:stroke-dasharray 1.2s cubic-bezier(.16,1,.3,1) 0.1s"/>
+          <circle id="donutNeu" cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="14"
+            stroke-dasharray="0 239" stroke-linecap="round" style="transition:stroke-dasharray 1.2s cubic-bezier(.16,1,.3,1) 0.2s"/>
+        </svg>
+        <div class="donut-center">
+          <div class="donut-pct" id="donutPct">—</div>
+          <div class="donut-sub">Positive</div>
+        </div>
+      </div>
+      <div class="legend" id="legend">
+        <div class="legend-row"><div class="legend-dot" style="background:var(--accent3)"></div> Positive <span class="legend-pct" id="lPos">—</span></div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--accent2)"></div> Negative <span class="legend-pct" id="lNeg">—</span></div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--gold)"></div> Neutral <span class="legend-pct" id="lNeu">—</span></div>
+      </div>
+    </div>
+
+    <!-- Bar: Meal mentions -->
+    <div class="chart-card" style="animation-delay:0.18s">
+      <h3>🍽 Meal Mentions</h3>
+      <div class="bar-chart" id="barChart">
+        <div class="bar-row">
+          <div class="bar-label">Breakfast</div>
+          <div class="bar-track"><div class="bar-fill" id="bBreakfast" style="background:var(--accent)"></div></div>
+          <div class="bar-num" id="nBreakfast" style="color:var(--accent)">0</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Lunch</div>
+          <div class="bar-track"><div class="bar-fill" id="bLunch" style="background:var(--accent2)"></div></div>
+          <div class="bar-num" id="nLunch" style="color:var(--accent2)">0</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Snacks</div>
+          <div class="bar-track"><div class="bar-fill" id="bSnacks" style="background:var(--accent3)"></div></div>
+          <div class="bar-num" id="nSnacks" style="color:var(--accent3)">0</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Dinner</div>
+          <div class="bar-track"><div class="bar-fill" id="bDinner" style="background:var(--gold)"></div></div>
+          <div class="bar-num" id="nDinner" style="color:var(--gold)">0</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:1.5rem;">📅 7-Day Trend</h3>
+      <div class="spark-wrap">
+        <svg viewBox="0 0 280 80" id="sparkSvg" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path id="sparkArea" fill="url(#sparkGrad)" d=""/>
+          <path id="sparkLine" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d=""/>
+        </svg>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Word Cloud -->
+  <div style="padding: 0 1.5rem 1.5rem;">
+    <div class="chart-card" style="animation-delay:0.25s">
+      <h3>☁️ Top Keywords</h3>
+      <div class="word-cloud" id="wordCloud">
+        <span style="color:var(--muted);font-size:0.85rem;">Analysing feedback…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Insights -->
+  <div class="insights-section">
+    <button class="analyse-btn" onclick="location.reload()">Reset Feedback</button>
+  </div>
+
+  <!-- Recent Feedback Feed -->
+  <div class="feed-section">
+    <p class="section-label" style="padding:0 0 0.5rem;">Recent Feedback</p>
+    <div class="feed-list" id="feedList">
+      <div class="feed-empty">Loading feedback…</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = "http://127.0.0.1:5000";
+
+// ──────────────────────────────────────────────
+// SAMPLE / DEMO DATA (used when server is offline)
+// ──────────────────────────────────────────────
+const DEMO_FEEDBACK = [
+  { id:1, message:"Breakfast was amazing today! Idli and sambar were perfect.", created_at:"2026-04-29" },
+  { id:2, message:"Dinner quality is getting worse. Rice was cold and undercooked.", created_at:"2026-04-29" },
+  { id:3, message:"Lunch was okay but could use more variety. Same menu every day.", created_at:"2026-04-28" },
+  { id:4, message:"The snacks in the evening are really good. Bajji was crispy!", created_at:"2026-04-28" },
+  { id:5, message:"Please improve the dinner. It was tasteless yesterday.", created_at:"2026-04-27" },
+  { id:6, message:"Breakfast timing should be extended. 9 AM is too early to close.", created_at:"2026-04-27" },
+  { id:7, message:"Loved the special lunch on Sunday! More special meals please.", created_at:"2026-04-26" },
+  { id:8, message:"The food is decent overall. Nothing to complain about.", created_at:"2026-04-26" },
+  { id:9, message:"Snacks are too oily. Please use less oil. Not healthy at all.", created_at:"2026-04-25" },
+  { id:10, message:"Breakfast was cold this morning. Please serve hot food.", created_at:"2026-04-25" },
+];
+
+let feedbackData = [];
+
+// ──────────────────────────────────────────────
+// SENTIMENT CLASSIFIER (local heuristic)
+// ──────────────────────────────────────────────
+function classifySentiment(text) {
+  const t = text.toLowerCase();
+  const pos = ['good','great','amazing','excellent','love','perfect','best','tasty','crispy','delicious','awesome','wonderful','fantastic','enjoyed','fresh'];
+  const neg = ['bad','terrible','cold','worse','tasteless','undercooked','oily','unhealthy','poor','horrible','dirty','late','slow','worst','disappointed','complaint'];
+  let score = 0;
+  pos.forEach(w => { if(t.includes(w)) score++; });
+  neg.forEach(w => { if(t.includes(w)) score--; });
+  if(score > 0) return 'positive';
+  if(score < 0) return 'negative';
+  return 'neutral';
+}
+
+function sentimentEmoji(s) {
+  return s === 'positive' ? '😊' : s === 'negative' ? '😤' : '😐';
+}
+
+// ──────────────────────────────────────────────
+// MEAL MENTIONS
+// ──────────────────────────────────────────────
+function countMealMentions(data) {
+  const counts = { breakfast:0, lunch:0, snacks:0, dinner:0 };
+  data.forEach(f => {
+    const t = f.message.toLowerCase();
+    if(t.includes('breakfast')) counts.breakfast++;
+    if(t.includes('lunch'))     counts.lunch++;
+    if(t.includes('snack') || t.includes('evening')) counts.snacks++;
+    if(t.includes('dinner'))   counts.dinner++;
+  });
+  return counts;
+}
+
+// ──────────────────────────────────────────────
+// KEYWORD EXTRACTION
+// ──────────────────────────────────────────────
+function extractKeywords(data) {
+  const stopWords = new Set(['the','is','was','are','and','but','or','it','to','a','an','in','of','for','with','be','this','that','too','also','very','not','on','at','we','i','you','my','me','so','as','by','from','please','more','has','have','had','its','get','they']);
+  const freq = {};
+  data.forEach(f => {
+    f.message.toLowerCase()
+      .replace(/[^a-z\s]/g,'')
+      .split(/\s+/)
+      .filter(w => w.length > 3 && !stopWords.has(w))
+      .forEach(w => { freq[w] = (freq[w]||0) + 1; });
+  });
+  return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,20);
+}
+
+// ──────────────────────────────────────────────
+// 7-DAY TREND (group by date)
+// ──────────────────────────────────────────────
+function buildTrend(data) {
+  const days = {};
+  data.forEach(f => {
+    const d = (f.created_at || '').substring(0,10) || 'unknown';
+    days[d] = (days[d]||0) + 1;
+  });
+  const sorted = Object.entries(days).sort((a,b)=>a[0].localeCompare(b[0])).slice(-7);
+  return sorted;
+}
+
+// ──────────────────────────────────────────────
+// COUNTER ANIMATION
+// ──────────────────────────────────────────────
+function animateCount(el, target) {
+  let start = 0;
+  const step = Math.ceil(target / 30);
+  const timer = setInterval(() => {
+    start = Math.min(start + step, target);
+    el.textContent = start;
+    if(start >= target) clearInterval(timer);
+  }, 30);
+}
+
+// ──────────────────────────────────────────────
+// RENDER KPIs
+// ──────────────────────────────────────────────
+function renderKPIs(data) {
+  // FIX: use f.sentiment set by server (auto_tag), not re-classify locally
+  const sentiments = data.map(f => f.sentiment || classifySentiment(f.message));
+  const pos = sentiments.filter(s=>s==='positive').length;
+  const neg = sentiments.filter(s=>s==='negative').length;
+  const neu = sentiments.filter(s=>s==='neutral').length;
+  const total = data.length;
+
+  animateCount(document.getElementById('kpiTotal'), total);
+  animateCount(document.getElementById('kpiPos'), pos);
+  animateCount(document.getElementById('kpiNeg'), neg);
+  animateCount(document.getElementById('kpiNeu'), neu);
+
+  // Donut
+  const circ = 2 * Math.PI * 38; // ~238.76
+  let offset = 0;
+  const segs = [
+    { id:'donutPos', count: pos, color:'var(--accent3)', lId:'lPos' },
+    { id:'donutNeg', count: neg, color:'var(--accent2)', lId:'lNeg' },
+    { id:'donutNeu', count: neu, color:'var(--gold)',    lId:'lNeu' },
+  ];
+  segs.forEach(seg => {
+    const pct = total ? seg.count/total : 0;
+    const len = pct * circ;
+    const circle = document.getElementById(seg.id);
+    circle.style.strokeDashoffset = -offset;
+    setTimeout(() => {
+      circle.style.strokeDasharray = `${len} ${circ - len}`;
+    }, 100);
+    offset += len;
+    document.getElementById(seg.lId).textContent = total ? Math.round(pct*100)+'%' : '0%';
+  });
+
+  const posPct = total ? Math.round((pos/total)*100) : 0;
+  document.getElementById('donutPct').textContent = posPct + '%';
+  return { pos, neg, neu, total };
+}
+
+// ──────────────────────────────────────────────
+// RENDER BAR CHART
+// ──────────────────────────────────────────────
+function renderBars(data) {
+  const counts = countMealMentions(data);
+  const max = Math.max(...Object.values(counts), 1);
+  const meals = { breakfast:'bBreakfast', lunch:'bLunch', snacks:'bSnacks', dinner:'bDinner' };
+  const nums  = { breakfast:'nBreakfast', lunch:'nLunch', snacks:'nSnacks', dinner:'nDinner' };
+  Object.entries(meals).forEach(([meal, id]) => {
+    const pct = (counts[meal]/max)*100;
+    setTimeout(() => {
+      document.getElementById(id).style.width = pct + '%';
+      document.getElementById(nums[meal]).textContent = counts[meal];
+    }, 400);
+  });
+}
+
+// ──────────────────────────────────────────────
+// RENDER SPARKLINE
+// ──────────────────────────────────────────────
+function renderSparkline(data) {
+  const trend = buildTrend(data);
+  if(trend.length < 2) return;
+  const values = trend.map(d=>d[1]);
+  const maxV = Math.max(...values);
+  const minV = Math.min(...values);
+  const W = 280, H = 70, pad = 10;
+  const xStep = (W - pad*2) / (values.length - 1);
+  const yScale = v => pad + (H - pad*2) * (1 - (v - minV) / (maxV - minV || 1));
+
+  const pts = values.map((v,i) => [pad + i*xStep, yScale(v)]);
+  const lineD = pts.map((p,i)=>(i===0?`M${p[0]},${p[1]}`:`L${p[0]},${p[1]}`)).join(' ');
+  const areaD = lineD + ` L${pts[pts.length-1][0]},${H} L${pts[0][0]},${H} Z`;
+
+  document.getElementById('sparkLine').setAttribute('d', lineD);
+  document.getElementById('sparkArea').setAttribute('d', areaD);
+}
+
+// ──────────────────────────────────────────────
+// RENDER WORD CLOUD
+// FIX: prefer server tags, fallback to keyword extract
+// ──────────────────────────────────────────────
+function renderWordCloud(data) {
+  // Try server tags first (richer, pre-classified)
+  const tagFreq = {};
+  data.forEach(f => {
+    const tags = Array.isArray(f.tags) ? f.tags : [];
+    tags.filter(Boolean).forEach(t => { tagFreq[t] = (tagFreq[t]||0) + 1; });
+  });
+  const serverKeywords = Object.entries(tagFreq).sort((a,b)=>b[1]-a[1]);
+  const keywords = serverKeywords.length >= 3 ? serverKeywords : extractKeywords(data);
+  const cloud = document.getElementById('wordCloud');
+  const colors = ['var(--accent)','var(--accent2)','var(--accent3)','var(--gold)'];
+  const sizes = [1.6, 1.3, 1.1, 0.95, 0.85, 0.78];
+
+  if(!keywords.length) {
+    cloud.innerHTML = '<span style="color:var(--muted);font-size:0.85rem;">Not enough data</span>';
+    return;
+  }
+
+  cloud.innerHTML = '';
+  keywords.forEach(([word, freq], i) => {
+    const span = document.createElement('span');
+    span.className = 'word-tag';
+    const color = colors[i % colors.length];
+    const size = sizes[Math.min(i, sizes.length-1)];
+    span.style.cssText = `
+      font-size:${size}rem;
+      color:${color};
+      background:${color.replace('var(','').replace(')','')};
+      background: rgba(0,0,0,0);
+      border:1px solid ${color};
+      opacity:${0.4 + (1 - i/keywords.length) * 0.6};
+      animation-delay:${i*0.05}s;
+      padding: ${0.25 + (1-i/keywords.length)*0.15}rem ${0.6 + (1-i/keywords.length)*0.3}rem;
+    `;
+    span.style.color = color;
+    span.style.borderColor = color;
+    span.style.background = `rgba(0,0,0,0)`;
+    span.textContent = word;
+    span.title = `${freq} mention${freq>1?'s':''}`;
+    cloud.appendChild(span);
+  });
+}
+
+// ──────────────────────────────────────────────
+// RENDER FEED
+// FIX: use server-provided f.sentiment + f.tags
+// ──────────────────────────────────────────────
+function renderFeed(data) {
+  const list = document.getElementById('feedList');
+  if(!data.length) {
+    list.innerHTML = '<div class="feed-empty">No feedback yet — submit some from the menu page!</div>';
+    return;
+  }
+  list.innerHTML = '';
+  data.slice(0,10).forEach((f, i) => {
+    // Use server sentiment (already set in init via map), fallback to local
+    const sentiment = f.sentiment || classifySentiment(f.message);
+    const sColor    = sentiment==='positive' ? 'var(--accent3)' : sentiment==='negative' ? 'var(--accent2)' : 'var(--gold)';
+
+    // Tags from server (array) or empty
+    const tags    = Array.isArray(f.tags) ? f.tags.filter(Boolean) : [];
+    const tagsHtml = tags.length
+      ? '<div style="margin-top:0.35rem;display:flex;gap:0.3rem;flex-wrap:wrap;">'
+        + tags.map(t => `<span style="font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(99,210,255,0.08);color:var(--accent);border:1px solid rgba(99,210,255,0.18);font-family:var(--font-display);font-weight:600;">#${t}</span>`).join('')
+        + '</div>'
+      : '';
+
+    const el = document.createElement('div');
+    el.className = 'feed-item';
+    el.style.animationDelay = `${i*0.06}s`;
+    el.innerHTML = `
+      <div class="feed-sentiment">${sentimentEmoji(sentiment)}</div>
+      <div style="flex:1">
+        <div class="feed-text">${escHtml(f.message)}</div>
+        ${tagsHtml}
+        <div class="feed-meta">
+          ${f.created_at || 'Today'} &nbsp;·&nbsp;
+          <span style="color:${sColor};font-weight:700;font-family:var(--font-display);font-size:0.68rem;">${sentiment.toUpperCase()}</span>
+          ${f.meal_type && f.meal_type!=='general' ? `&nbsp;·&nbsp; <span style="color:var(--muted)">${f.meal_type}</span>` : ''}
+        </div>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+// ──────────────────────────────────────────────
+// AI ANALYSIS via Claude API
+// ──────────────────────────────────────────────
+async function runAIAnalysis() {
+  const btn = document.getElementById('analyseBtn');
+  const body = document.getElementById('insightBody');
+  const chips = document.getElementById('insightChips');
+
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> Analysing…`;
+  chips.innerHTML = '';
+  body.innerHTML = '';
+
+  const messages = feedbackData.slice(0,15).map(f=>f.message).join('\n- ');
+  const prompt = `You are a hostel food manager's analytics assistant. Analyse this student feedback and give:
+1. Overall sentiment summary (2-3 sentences)
+2. Top 3 issues students face
+3. Top 2 things students love
+4. 3 specific actionable recommendations
+
+Feedback collected:
+- ${messages}
+
+Be concise, empathetic, and practical. Use bullet points where helpful. Keep it under 200 words.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.map(c=>c.text||'').join('') || 'No response received.';
+
+    // Typewriter effect
+    body.innerHTML = '';
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    body.appendChild(cursor);
+
+    const typeTimer = setInterval(() => {
+      cursor.before(text[i]);
+      i++;
+      if(i >= text.length) {
+        clearInterval(typeTimer);
+        cursor.remove();
+      }
+    }, 12);
+
+    // Extract sentiment chips
+    const sentimentData = feedbackData.map(f => classifySentiment(f.message));
+    const pos = sentimentData.filter(s=>s==='positive').length;
+    const neg = sentimentData.filter(s=>s==='negative').length;
+    const topKeywords = extractKeywords(feedbackData).slice(0,6);
+
+    setTimeout(() => {
+      chips.innerHTML = '';
+      topKeywords.forEach(([w]) => {
+        const chip = document.createElement('span');
+        const s = classifySentiment(w);
+        chip.className = `chip ${pos > neg ? 'pos' : 'neg'}`;
+        chip.textContent = '#' + w;
+        chips.appendChild(chip);
+      });
+    }, 1500);
+
+  } catch(err) {
+    body.textContent = '⚠️ Could not connect to Claude AI. Make sure you are using the Claude.ai interface with API access enabled.';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✦ Re-analyse';
+  }
+}
+
+// ──────────────────────────────────────────────
+// UTILS
+// ──────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ──────────────────────────────────────────────
+// FETCH ALL COMPLAINTS (handles pagination)
+// ──────────────────────────────────────────────
+async function fetchAllComplaints() {
+  let page = 1, all = [];
+  while (true) {
+    const res  = await fetch(`${API}/complaints?page=${page}&limit=100`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const body = await res.json();
+    // FIX: server returns { complaints:[...], total, page, pages }
+    // Old code: res.json() returned object → .length was undefined → threw → demo mode
+    const items = Array.isArray(body) ? body : (body.complaints || []);
+    all = all.concat(items);
+    if (page >= (body.pages || 1)) break;
+    page++;
+  }
+  return all;
+}
+
+// ──────────────────────────────────────────────
+// INIT — load LIVE data, fallback to demo only
+//        if server is genuinely unreachable
+// ──────────────────────────────────────────────
+async function init() {
+  document.getElementById('kpiTotal').textContent = '…';
+  let isLive = false;
+
+  try {
+    const data = await fetchAllComplaints();
+    feedbackData = data;
+    isLive = true;
+    const msg = data.length ? '✅ Live data — ' + data.length + ' feedback(s)' : '✅ Connected — no feedback yet';
+    showToast(msg, 'success');
+  } catch(err) {
+    feedbackData = DEMO_FEEDBACK;
+    showToast('⚠️ Server offline — showing demo data', 'error');
+  }
+
+  // FIX: use server-provided sentiment; only re-classify for demo data
+  feedbackData = feedbackData.map(f => ({
+    ...f,
+    sentiment: f.sentiment || classifySentiment(f.message)
+  }));
+
+  // Update live/demo badge
+  const badge = document.getElementById('liveBadge');
+  if (badge) {
+    badge.textContent = isLive ? '🟢 Live' : '🟡 Demo';
+    badge.style.color = isLive ? 'var(--accent3)' : 'var(--gold)';
+    badge.style.borderColor = isLive ? 'rgba(127,255,110,0.3)' : 'rgba(255,209,102,0.3)';
+    badge.style.background  = isLive ? 'rgba(127,255,110,0.07)' : 'rgba(255,209,102,0.07)';
+  }
+
+  renderKPIs(feedbackData);
+  renderBars(feedbackData);
+  renderSparkline(feedbackData);
+  renderWordCloud(feedbackData);
+  renderFeed(feedbackData);
+}
+
+// ──────────────────────────────────────────────
+// TOAST (reuse from app.js style)
+// ──────────────────────────────────────────────
+function showToast(msg, type='info') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('hide');
+    setTimeout(()=>t.remove(), 350);
+  }, 4000);
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
